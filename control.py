@@ -52,7 +52,7 @@ def randStart(size):
 def glideStart(size):
     # YOUR CODE HERE
     grid = np.zeros(size, dtype=int)
-    coords = [(2,0), (0,1), (2,1), (1,2), (2,2)]
+    coords = [(0,2), (1,0), (1,2), (2,1), (2,2)]
     for y, x in coords:
         if y < size[0] and x < size[1]:
             grid[y][x] = 1
@@ -115,10 +115,10 @@ def neighborDiamond(x, y):
 def tally_neighbors(grid, position, neighborSet):
     max_state = NUM_STATES
     tally = [0] * max_state
-    x, y = position
-    for nx, ny in neighborSet(x, y):
-        if 0 <= nx < grid.shape[0] and 0 <= ny < grid.shape[1]:
-            tally[grid[nx][ny]] += 1
+    y, x = position  # FIXED: interpret position as (row, column)
+    for dx, dy in neighborSet(x, y):
+        if 0 <= dy < grid.shape[0] and 0 <= dx < grid.shape[1]:
+            tally[grid[dy][dx]] += 1
     return tally
 
 
