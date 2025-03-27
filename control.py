@@ -21,9 +21,11 @@ class Grid:
 
     def __init__(self, size, setup):
         # YOUR CODE HERE
+        self.gridSize = size
+        self.data = setup(size)
+        self.generations = 0
         # Remember to set object attributes self.gridSize and self.data.
         self.generations = 0
-
 
 #--------------------------------------------------------------------
 # Initialization functions -- used by the constructor. Only one is used
@@ -39,7 +41,7 @@ def randStart(size):
     # To get your random numbers, you must use the generator from numpy.random which 
     # is stored in the global variable RNG defined above.
     # See https://numpy.org/doc/stable/reference/random/index.html#random-quick-start    
-    pass
+    return RNG.integers(low=0, high=NUM_STATES, size=size)
 
 # function: glideStart
 # Purpose: employed by grid __init__ (constructor) to give initial value to data
@@ -49,7 +51,12 @@ def randStart(size):
 # on a game w 2 states.
 def glideStart(size):
     # YOUR CODE HERE
-    pass
+    grid = np.zeros(size, dtype=int)
+    coords = [(2,0), (0,1), (2,1), (1,2), (2,2)]
+    for y, x in coords:
+        if y < size[0] and x < size[1]:
+            grid[y][x] = 1
+    return grid
 
 # --------------------------------------------------------------------
 # Rule functions -- used by the evolve function. Only one is used
@@ -65,7 +72,12 @@ def glideStart(size):
 # Note: assumes a two-state game, where 0 is "dead" and 1 is "alive"
 def ruleGOL(cell, tallies):
     # YOUR CODE HERE
-    pass
+    alive_neighbors = tallies[1]
+    if cell == 1:
+        return 1 if alive_neighbors in [2, 3] else 0
+    else:
+        return 1 if alive_neighbors == 3 else 0
+
 
 # function: ruleCycle
 # purpose: applies a set of rules given a current state and a set of tallies over neighbor states
@@ -74,8 +86,8 @@ def ruleGOL(cell, tallies):
 # returns: if k is the current state, returns k+1 if there is a neighbor of state k+1, else returns k
 #          See https://en.wikipedia.org/wiki/Cyclic_cellular_automaton
 def ruleCycle(cell, tallies):
-    # YOUR CODE HERE
-    pass
+    next_state = (cell + 1) % NUM_STATES
+    return next_state if tallies[next_state] > 0 else cell
 
 
 # --------------------------------------------------------------------
@@ -84,13 +96,12 @@ def ruleCycle(cell, tallies):
 # --------------------------------------------------------------------
 # returns a list of neighbors in a square around x,y
 def neighborSquare(x, y):
-    # YOUR CODE HERE
-    pass
+    return [(x+dx, y+dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1] if not (dx == 0 and dy == 0)]
+
 
 # returns a list of neighbors in a diamond around x,y (NWSE positions)
 def neighborDiamond(x, y):
-    # YOUR CODE HERE
-    pass
+    return [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
 
 
 # function: tally_neighbors
@@ -102,8 +113,13 @@ def neighborDiamond(x, y):
 # Note: neighborSet may not necessarily return *valid* neighbors. It's tally_neighbor's job to check
 # for validity.
 def tally_neighbors(grid, position, neighborSet):
-    # YOUR CODE HERE
-    pass
+    max_state = NUM_STATES
+    tally = [0] * max_state
+    x, y = position
+    for nx, ny in neighborSet(x, y):
+        if 0 <= nx < grid.shape[0] and 0 <= ny < grid.shape[1]:
+            tally[grid[nx][ny]] += 1
+    return tally
 
 
 # student: putting it all together.
@@ -116,8 +132,14 @@ def tally_neighbors(grid, position, neighborSet):
 # The grid's generations variable should be incremented every time the function is called. (This variable
 # may only be useful for debugging--there is a lot we *could* do with it, but our application doesn't use it.)
 def evolve(g, apply_rule, neighbors) -> None:
-    # YOUR CODE HERE
-    pass
+    new_data = np.copy(g.data)
+    for x in range(g.gridSize[0]):
+        for y in range(g.gridSize[1]):
+            position = (x, y)
+            tallies = tally_neighbors(g.data, position, neighbors)
+            new_data[x][y] = apply_rule(g.data[x][y], tallies)
+    g.data = new_data
+    g.generations += 1
 
 
 # Here we define some global (to the module) variables which will determine what CA to run.
@@ -129,5 +151,5 @@ WHICH_NEIGHBOR = neighborSquare
 
 # Should we save a gif of the animation?
 # (Set the parameters (including filename) of the animation in display.py)
-SAVE_ANIMATION = False
+SAVE_ANIMATION = True
 
